@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <utime.h>
 
 void archiveFile(const char* file, FILE *mtar) {
    FILE *rFile;
@@ -51,22 +52,32 @@ void readArchive(FILE *mtar) {
    int statbuffSize = 144; //statbuffs are 144 bytes
    long int numFiles = 0; 
    long int numBytes = 0;
+   
 
-   fseek(mtar, 0, SEEK_END); //used to capture number of bytes in tar file
-   numFiles = ftell(mtar) / statbuffSize; //used to get number of files
-	fseek(mtar, 0, SEEK_SET);// place pointer at beginning of file
-	for(int i = 0; i < numFiles; i++) {
+	for(int i = 0; i < 2; i++) {
 
 		//read from .mtar to gather filename,numbytes,and contents
 		fread(&statbuf, sizeof(struct stat), 1, mtar);
 		printf("File Size: %ld\n", statbuf.st_size);
-      char *fileName = (char*) malloc(statbuf.st_size); //allocate buf
-      fread(fileName, 1, statbuf.st_size, mtar);
-		printf("File Name: %s\n", buffer);
+      char *fileName = (char*) malloc(statbuf.st_size); //allocate filename
+      fread(fileName, 1, statbuf.st_size, mtar); //get file name
+		printf("File Name: %s\n", fileName);
       char *contents = (char*) malloc(statbuf.st_size); //allocate contents
-		fread(contents, 1, statbuf.st_size, mtar);
+		fread(contents, 1, statbuf.st_size, mtar); //get contents
 		printf("File Contents: %s\n", contents);
-
+      
+      //reopen and write out contents/permissions
+	   FILE *wFile;  //file pointer
+		struct utimbuf utim;
+      char wBuf[statbuf.st_size]; //allocate buffer to size of file contents
+   	wFile = fopen(fileName, "w");
+      strcpy(wBuf, contents);  //copy file contents into buffer
+      fwrite(wBuf, 1, statbuf.st_size, wFile); //write out contents
+      chmod(fileName, statbuf.st_mode); //change mode
+		utim.actime = statbuf.st_atime; //adjust file access time
+		utim.modtime = statbuf.st_mtime; //adjust file access time
+      fclose(wFile);
+	   utime(fileName, &utim);
 		free(contents); //deallocate contents
       free(fileName); //deallocate fileName
 	}
