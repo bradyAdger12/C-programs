@@ -10,7 +10,7 @@
 //GLOBALS
 struct tm timeBuf;
 
- void humanReadable(char *month, char *day, char *year, char *hours, char *minutes, char *seconds) {
+ void humanReadable(char *file, char *month, char *day, char *year, char *hours, char *minutes, char *seconds) {
        char readableDate[30];
        int y = atoi(year);
        int m = atoi(month) - 1;
@@ -20,13 +20,13 @@ struct tm timeBuf;
        int s = atoi(seconds);
 
        //error checks
-       if(m > 11) {
+       if(m > 11 || m <= 0) {
 	  char *monthError = "Incorrect month(ex. 1-12)\n";
        	  write(2, monthError, strlen(monthError));
 	  exit(1);
        }
 
-       if(d > 31) {
+       if(d > 31 || d <= 0) {
        	   char *dayError = "Incorrect day(ex. 1-31)\n";
 	   write(2, dayError, strlen(dayError));
 	   exit(1);
@@ -53,7 +53,7 @@ struct tm timeBuf;
        
        //convert and print readable date
        strftime(readableDate, 30, "%c", &timeBuf);
-       printf("%s\n", readableDate);
+       printf("Changing file %s timestanmps to %s\n", file, readableDate);
  }
 
 int main(int argc, char **argv) {
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 		perror("ERROR MESSAGE");
 		exit(1);
 	}
-  	humanReadable(argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]);      
+  	humanReadable(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7]);      
         timeConversion = mktime(&timeBuf);
 	timeStruct.actime = timeConversion;
 	timeStruct.modtime = timeConversion;
