@@ -12,9 +12,8 @@ int main(int argc, char **argv) {
 	while(1) {
 		char **array = (char **) malloc(sizeof(char **) * 3);
 		char command[SIZE];  
-	    char *line;
+	        char *line;
 		printf("MY_UNIX> ");
-		//printf("is fault here\n");
 		fgets(command, SIZE, stdin);
 		index = 0; //reset word index position
 		line = strtok(command, " ");
@@ -41,7 +40,6 @@ int main(int argc, char **argv) {
 			default:
 				wait(NULL);   
 				free(array);
-		
 		}   	
 	} 
 }
