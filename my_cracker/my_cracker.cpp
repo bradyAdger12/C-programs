@@ -8,27 +8,30 @@
 #include <ctime>
 using namespace std;
 vector<char*> words;
+set<char*> takenWords;
 char *password;
 int numThreads = 0;
+bool go = true;
 
 void *run(void *v) {
    long thread = (long) v; 
-   while(1) {
+   while(go) {
 	   char *word1 = words[rand() %  words.size()];
 	   char *word2 = words[rand() %  words.size()]; 
 	   char * passwordCheck = (char *) malloc(1+ strlen(word1)+ strlen(word2) );
 	   strcpy(passwordCheck, word1);
 	   strcat(passwordCheck, word2);
 	   if(strcmp(password, passwordCheck) == 0) {
-		   printf("Password cracked: %s", passwordCheck);
-		   exit(0);
-	   } 
+		printf("Thread: %d -> Password cracked: %s\n", thread, passwordCheck);
+		go = false;
+	     } 	
 	   free(passwordCheck);
-   } 
-}
+  	   }
+} 
 int main(int argc, char **argv) {
     numThreads = atoi(argv[3]);
-    pthread_t threads[numThreads];
+    int createThread = 0;
+    pthread_t *threads = (pthread_t*) malloc(sizeof(pthread_t) * numThreads);
     if(argc != 4) {
 	fprintf(stderr, "%s\n", "usage: exec fileName seed N");
     }
@@ -46,16 +49,21 @@ int main(int argc, char **argv) {
     fclose(f);
     char *word1 = words[rand() % words.size()];
     char *word2 = words[rand() % words.size()]; 
-	password = (char*) realloc(password, 1+(strlen(word1) + strlen(word2)));
-	strcpy(password, word1);
-	strcat(password, word2);
-    printf("Password: %s\nlength: %d\n", password, strlen(password));
+    password = (char*) malloc(1+(strlen(word1) + strlen(word2)));
+    strcpy(password, word1);
+    strcat(password, word2);
+    printf("Password: %s\n", password);
     for(int i =0; i < numThreads; i++) {
-   	pthread_create(&threads[i], NULL, run, (void *) i);
+   	if(pthread_create(&threads[i], NULL, run, (void *) i)) {
+           fprintf(stderr, "%s\n", "Thread did not successfully spawn");
+	   exit(1);
+	}	
     }
     for(int i =0; i < numThreads; i++) {
-   	pthread_join(threads[i], NULL);
+   	if(pthread_join(threads[i], NULL) != 0) {	
+           fprintf(stderr, "%s\n", "Thread did not successfully join");
+	   exit(1);
+	}
     }
 	free(password);	
-    
 }
